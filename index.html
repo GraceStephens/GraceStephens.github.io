@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Grace Stephens — ML systems and the validation behind them</title>
+<meta name="description" content="Grace Stephens builds ML systems and the validation that tells you whether to trust them. Cognitive science + computer science, University of Chicago.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F6F7F5;
+    --paper-2: #EDEFEA;
+    --ink: #17201C;
+    --ink-2: #4A5550;
+    --ink-3: #7C8782;
+    --rule: #D5DAD6;
+    --teal: #0F6E56;
+    --teal-soft: #DDEFE7;
+    --teal-ink: #085041;
+    --coral: #C2502A;
+    --coral-soft: #F8E3DA;
+    --coral-ink: #712B13;
+    --amber-soft: #F9ECD2;
+    --amber-ink: #633806;
+    --serif: "Newsreader", Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+    --max: 1060px;
+    --gutter: clamp(20px, 5vw, 48px);
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #141917; --paper-2: #1D2320; --ink: #E8ECE9; --ink-2: #B4BDB8; --ink-3: #7F8984;
+      --rule: #2E3633; --teal: #5DCAA5; --teal-soft: #0F3B30; --teal-ink: #9FE1CB;
+      --coral: #F0997B; --coral-soft: #4A2416; --coral-ink: #F5C4B3; --amber-soft: #41310E; --amber-ink: #FAC775;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #141917; --paper-2: #1D2320; --ink: #E8ECE9; --ink-2: #B4BDB8; --ink-3: #7F8984;
+    --rule: #2E3633; --teal: #5DCAA5; --teal-soft: #0F3B30; --teal-ink: #9FE1CB;
+    --coral: #F0997B; --coral-soft: #4A2416; --coral-ink: #F5C4B3; --amber-soft: #41310E; --amber-ink: #FAC775;
+  }
+  html { scroll-padding-top: calc(72px + env(safe-area-inset-top, 0px)); scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+  *, *::before, *::after { box-sizing: inherit; margin: 0; }
+  body {
+    font-family: var(--sans); font-size: 17px; line-height: 1.6; color: var(--ink); background: var(--paper);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--teal); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: 2px; }
+  :focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; border-radius: 2px; }
+  img, svg { max-width: 100%; display: block; }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+
+  nav {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
+    background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+  nav .mark { font-family: var(--serif); font-size: 22px; font-weight: 500; text-decoration: none; color: var(--ink); }
+  nav ul { list-style: none; display: flex; gap: 26px; padding: 0; }
+  nav ul a { color: var(--ink-2); text-decoration: none; font-size: 15px; }
+  nav ul a:hover { color: var(--ink); }
+
+  /* Hero */
+  .hero { padding: clamp(56px, 9vw, 112px) 0 clamp(40px, 6vw, 72px); border-bottom: 1px solid var(--rule); }
+  .hero h1 { font-family: var(--serif); font-weight: 500; font-size: clamp(40px, 6.2vw, 72px); line-height: 1.02; letter-spacing: -0.01em; max-width: 15ch; }
+  .hero h1 em { font-style: italic; font-weight: 400; }
+  .hero .lede { margin-top: 28px; font-size: clamp(18px, 2vw, 21px); line-height: 1.5; max-width: 54ch; color: var(--ink-2); }
+  .hero .meta { margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 32px; max-width: 760px; border-top: 1px solid var(--rule); padding-top: 20px; }
+  .hero .meta div { font-size: 15px; color: var(--ink-2); }
+  .hero .meta strong { display: block; font-weight: 500; color: var(--ink); }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 6px;
+    font-weight: 500; font-size: 15px; text-decoration: none; border: 1px solid var(--ink); color: var(--ink); background: transparent;
+  }
+  .btn.primary { background: var(--ink); color: var(--paper); }
+  .btn:hover { text-decoration: none; background: var(--paper-2); }
+  .btn.primary:hover { background: var(--teal-ink); border-color: var(--teal-ink); color: #fff; }
+  .btn svg { width: 16px; height: 16px; }
+
+  /* Sections */
+  section.block { padding: clamp(48px, 7vw, 88px) 0; border-bottom: 1px solid var(--rule); }
+  .section-title { font-family: var(--serif); font-weight: 500; font-size: clamp(28px, 3.4vw, 36px); line-height: 1.15; margin-bottom: 8px; }
+  .section-intro { color: var(--ink-2); max-width: 60ch; margin-bottom: 40px; }
+
+  /* Case study */
+  .case { display: grid; grid-template-columns: 280px 1fr; gap: 48px; align-items: start; }
+  .case + .case { margin-top: clamp(56px, 7vw, 88px); padding-top: clamp(56px, 7vw, 88px); border-top: 1px solid var(--rule); }
+  .facts { position: sticky; top: calc(76px + env(safe-area-inset-top, 0px)); }
+  .facts .context { font-size: 14px; color: var(--ink-3); margin-bottom: 18px; }
+  .facts dl { display: grid; gap: 14px; margin: 0; }
+  .facts dt { font-size: 13px; color: var(--ink-3); margin-bottom: 2px; }
+  .facts dd { font-size: 15px; color: var(--ink); line-height: 1.45; }
+  .facts .result { font-family: var(--serif); font-size: 24px; line-height: 1.2; color: var(--ink); }
+  .facts .result span { color: var(--teal); }
+  .facts .links { margin-top: 24px; display: grid; gap: 10px; }
+  .facts .links a { font-size: 15px; }
+  .pill-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .pill { font-size: 13px; padding: 3px 9px; border-radius: 4px; background: var(--paper-2); color: var(--ink-2); }
+
+  .narrative h3.title { font-family: var(--serif); font-weight: 500; font-size: clamp(28px, 3.6vw, 40px); line-height: 1.1; letter-spacing: -0.005em; max-width: 20ch; }
+  .narrative .summary { margin-top: 14px; font-size: 19px; color: var(--ink-2); max-width: 56ch; line-height: 1.5; }
+  .narrative h4 { font-family: var(--sans); font-weight: 600; font-size: 17px; margin: 36px 0 10px; }
+  .narrative p { max-width: 62ch; margin-bottom: 14px; }
+  .narrative ul { max-width: 62ch; padding-left: 20px; margin-bottom: 14px; }
+  .narrative li { margin-bottom: 8px; }
+  .figure { margin: 24px 0 8px; }
+  .figure figcaption { font-size: 14px; color: var(--ink-3); margin-top: 10px; max-width: 62ch; }
+  .panel { border: 1px solid var(--rule); border-radius: 8px; background: var(--paper-2); padding: 18px; }
+
+  /* Pipeline SVG theming */
+  .pipe .node rect { fill: var(--paper); stroke: var(--rule); stroke-width: 1; }
+  .pipe .node.keep rect { fill: var(--teal-soft); stroke: var(--teal); }
+  .pipe .node.loop rect { fill: var(--amber-soft); stroke: var(--amber-ink); }
+  .pipe text { font-family: var(--sans); fill: var(--ink); font-size: 13px; }
+  .pipe text.sub { fill: var(--ink-2); font-size: 11.5px; }
+  .pipe .node.keep text { fill: var(--teal-ink); }
+  .pipe .node.loop text { fill: var(--amber-ink); }
+  .pipe .edge { stroke: var(--ink-3); fill: none; stroke-width: 1.2; }
+  .pipe .edge.back { stroke-dasharray: 4 4; stroke: var(--amber-ink); }
+  .pipe .lbl { fill: var(--ink-3); font-size: 11.5px; }
+
+  /* Hypothesis list */
+  ol.hyp { list-style: none; padding: 0; counter-reset: h; max-width: 62ch; margin: 0 0 8px; }
+  ol.hyp li { counter-increment: h; display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: baseline; padding: 11px 0; border-top: 1px solid var(--rule); }
+  ol.hyp li::before { content: counter(h); font-family: var(--serif); font-size: 18px; color: var(--ink-3); }
+  ol.hyp li:last-child { border-bottom: 1px solid var(--rule); }
+  ol.hyp .q { font-weight: 500; }
+  ol.hyp .q small { display: block; font-weight: 400; color: var(--ink-2); font-size: 14.5px; }
+  .tag { font-size: 12.5px; padding: 3px 9px; border-radius: 4px; white-space: nowrap; font-weight: 500; }
+  .tag.out { background: var(--paper-2); color: var(--ink-2); }
+  .tag.partial { background: var(--amber-soft); color: var(--amber-ink); }
+  .tag.cause { background: var(--teal-soft); color: var(--teal-ink); }
+
+  /* Region-sampling explainer */
+  :root { --cell-a: #1D9E75; --cell-b: #7F77DD; --cell-c: #D85A30; }
+  .corr { display: grid; gap: 16px; }
+  .corr-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .corr .toggle { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--paper); }
+  .corr .toggle button { font: inherit; font-size: 14px; font-weight: 500; padding: 8px 14px; border: 0; background: transparent; color: var(--ink-2); cursor: pointer; }
+  .corr .toggle button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .legend { display: flex; gap: 14px; font-size: 13px; color: var(--ink-2); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+  #spicule { background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; }
+  #spicule .sp-lbl { font-family: var(--sans); font-size: 12px; fill: var(--ink-3); }
+  #spicule circle { stroke: var(--paper); stroke-width: 1; transition: opacity .35s; }
+  #spicule circle.dim { opacity: .18; }
+  #window { transition: x .5s cubic-bezier(.2,.8,.2,1), width .5s cubic-bezier(.2,.8,.2,1); }
+  .counts { display: grid; grid-template-columns: 72px 1fr 44px; gap: 6px 12px; align-items: center; font-size: 14px; }
+  .counts .lab { color: var(--ink-2); }
+  .counts .track { position: relative; height: 22px; }
+  .counts .ref { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); z-index: 1; }
+  .counts .fill { position: absolute; top: 4px; height: 14px; border-radius: 3px; transition: width .5s cubic-bezier(.2,.8,.2,1); }
+  .counts .val { text-align: right; font-variant-numeric: tabular-nums; }
+  .counts .key { grid-column: 1 / -1; font-size: 12.5px; color: var(--ink-3); }
+  .counts .key b { display: inline-block; width: 2px; height: 12px; background: var(--ink); vertical-align: -2px; margin: 0 5px 0 2px; }
+  .corr .readout { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; border-top: 1px solid var(--rule); padding-top: 14px; }
+  .corr .num { font-family: var(--serif); font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; color: var(--coral); }
+  .corr .num.pos { color: var(--teal); }
+  .corr .what { font-size: 14.5px; color: var(--ink-2); max-width: 46ch; }
+
+  /* Embedding + review explainers */
+  #embsvg { background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; }
+  #embsvg circle { stroke: var(--paper); stroke-width: 1; transition: cx .7s cubic-bezier(.2,.8,.2,1), cy .7s cubic-bezier(.2,.8,.2,1); }
+  .review-grid { display: grid; grid-template-columns: 180px 1fr; gap: 20px; align-items: start; }
+  .cell-card { background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 12px; }
+  .cell-card svg { width: 100%; height: auto; }
+  .pred { display: grid; gap: 2px; margin-top: 10px; font-size: 14px; }
+  .pred strong { font-weight: 500; font-size: 17px; text-transform: capitalize; }
+  .muted { color: var(--ink-3); font-size: 13.5px; }
+  .rbtn { font: inherit; font-size: 14px; font-weight: 500; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer; }
+  .rbtn.agree { background: var(--ink); color: var(--paper); }
+  .rbtn:hover { background: var(--paper-2); } .rbtn.agree:hover { background: var(--teal-ink); border-color: var(--teal-ink); color: #fff; }
+  .correct { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+  .correct select { font: inherit; font-size: 14px; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); }
+  .tally { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule); font-size: 14px; color: var(--ink-2); }
+  .tally strong { font-family: var(--serif); font-size: 22px; color: var(--ink); font-weight: 500; margin-right: 4px; }
+  @media (max-width: 520px) { .review-grid { grid-template-columns: 1fr; } .cell-card { max-width: 180px; } }
+
+  /* Renters flow */
+  .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; margin: 0; padding: 0; list-style: none; }
+  .flow li { flex: 1 1 150px; border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; background: var(--paper); position: relative; }
+  .flow li strong { display: block; font-weight: 500; font-size: 15px; }
+  .flow li span { font-size: 13.5px; color: var(--ink-2); }
+  .flow li.src { background: var(--coral-soft); border-color: var(--coral); }
+  .flow li.src strong { color: var(--coral-ink); } .flow li.src span { color: var(--coral-ink); }
+  .flow li.out { background: var(--teal-soft); border-color: var(--teal); }
+  .flow li.out strong { color: var(--teal-ink); } .flow li.out span { color: var(--teal-ink); }
+
+  /* Sample report */
+  .report { border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--paper); max-width: 560px; }
+  .report header { padding: 14px 16px; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .report header strong { font-weight: 500; }
+  .report header small { color: var(--ink-3); font-size: 13px; }
+  .report .row { display: grid; grid-template-columns: 76px 1fr; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--rule); font-size: 14.5px; }
+  .report .row:first-of-type { border-top: 0; }
+  .report .sev { font-size: 12.5px; font-weight: 500; padding: 2px 8px; border-radius: 4px; text-align: center; height: max-content; }
+  .sev.high { background: var(--coral-soft); color: var(--coral-ink); }
+  .sev.med { background: var(--amber-soft); color: var(--amber-ink); }
+  .sev.info { background: var(--paper-2); color: var(--ink-2); }
+  .report .row span { color: var(--ink-2); display: block; font-size: 13.5px; }
+
+  /* Experience */
+  .exp { list-style: none; padding: 0; margin: 0; max-width: 820px; }
+  .exp li { display: grid; grid-template-columns: 1fr 1.6fr; gap: 24px; padding: 18px 0; border-top: 1px solid var(--rule); }
+  .exp li:last-child { border-bottom: 1px solid var(--rule); }
+  .exp strong { font-weight: 500; display: block; }
+  .exp small { color: var(--ink-3); font-size: 14px; }
+  .exp p { color: var(--ink-2); font-size: 15.5px; }
+
+  /* About */
+  .about { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; max-width: 920px; }
+  .about p { max-width: 50ch; margin-bottom: 14px; }
+
+  footer { padding: 48px 0 56px; }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; align-items: baseline; }
+  footer a { margin-right: 20px; }
+  footer small { color: var(--ink-3); font-size: 14px; }
+
+  @media (max-width: 860px) {
+    .case { grid-template-columns: 1fr; gap: 28px; }
+    .facts { position: static; padding: 18px; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper-2); }
+    .facts dl { grid-template-columns: 1fr 1fr; }
+    .facts dl .wide { grid-column: 1 / -1; }
+    .about { grid-template-columns: 1fr; gap: 8px; }
+    .exp li { grid-template-columns: 1fr; gap: 6px; }
+    nav ul { gap: 16px; } nav ul a { font-size: 14px; }
+  }
+  @media (max-width: 520px) {
+    .facts dl { grid-template-columns: 1fr; }
+    .corr .num { font-size: 36px; }
+    nav ul li:nth-child(2) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="mark" href="#top" aria-label="Grace Stephens, home">G. Stephens</a>
+    <ul>
+      <li><a href="#work">Work</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <h1>I build ML systems, and the <em>validation</em> that tells you whether to trust them.</h1>
+    <p class="lede">I'm Grace Stephens. I study how people think (cognitive science) and how systems work (computer science), and I'm most interested in where they meet: interpretability, AI safety, and tools that put real evidence in front of people at the moment a decision gets made.</p>
+    <div class="meta">
+      <div><strong>University of Chicago</strong>BA cognitive science + MS computer science (3+1)</div>
+      <div><strong>Graduating June 2027</strong>Available for full-time roles from August 2027</div>
+      <div><strong>Looking at</strong>AI safety and interpretability, biotech research, ML engineering</div>
+    </div>
+    <div class="actions">
+      <a class="btn primary" href="mailto:gracestephens@uchicago.edu">Email me</a>
+      <a class="btn" href="https://github.com/GraceStephens">GitHub</a>
+      <a class="btn" href="resume.pdf">Résumé (PDF)</a>
+    </div>
+  </div>
+</header>
+
+<section class="block" id="work">
+  <div class="wrap">
+    <h2 class="section-title">Selected work</h2>
+    <p class="section-intro">Two projects with the same shape: someone makes a claim, and I build the thing that checks it against ground truth.</p>
+
+    <!-- ============ Case 1: bone marrow ============ -->
+    <article class="case" id="marrow">
+      <aside class="facts" aria-label="Project facts">
+        <div class="context">Quad Summer Undergraduate Research Scholar (competitive grant), Pearson Lab, University of Chicago. August to September 2026.</div>
+        <dl>
+          <div><dt>Result</dt><dd class="result">Agreement with pathologists<br><span>r = −0.16 → +0.40</span></dd></div>
+          <div><dt>My role</dt><dd>Sole developer, working with a hematologist supervisor</dd></div>
+          <div><dt>Scale</dt><dd>1M+ cells per slide; classifier head trained on 170K+ labelled cells</dd></div>
+          <div class="wide"><dt>Stack</dt><dd><div class="pill-list"><span class="pill">Python</span><span class="pill">PyTorch</span><span class="pill">Cellpose</span><span class="pill">Slideflow</span><span class="pill">DinoBloom (DINOv2 ViT)</span><span class="pill">SLURM / A100</span><span class="pill">Review UI (HTML/JS)</span></div></dd></div>
+          <div><dt>Status</dt><dd>Delivered and handed off to the lab. Code private pending lab release.</dd></div>
+        </dl>
+        <div class="links">
+          <a href="mailto:gracestephens@uchicago.edu?subject=Bone%20marrow%20pipeline%20walkthrough">Ask me for a code walkthrough</a>
+        </div>
+      </aside>
+
+      <div class="narrative">
+        <h3 class="title">Automating bone marrow cell counts, then finding out why the first version was wrong</h3>
+        <p class="summary">An end-to-end computational pathology pipeline, plus the validation framework that compared it to real pathologists and exposed a sampling bug worth fixing.</p>
+
+        <h4>The problem</h4>
+        <p>Diagnosing leukemias and other blood cancers starts with a <em>differential</em>: a pathologist looks at a bone marrow aspirate slide and manually counts and classifies several hundred cells by type. It is slow, tiring, and varies between people. Automating the count is tempting. Automating it in a way a pathologist should actually trust is the real problem.</p>
+
+        <h4>What I built</h4>
+        <p>A pipeline that takes a whole-slide image and produces a differential count, with a review interface so pathologists can correct it. Their corrections are stored as new training labels, so the system gets better where it is weakest.</p>
+
+        <figure class="figure">
+          <div class="panel">
+            <svg class="pipe" viewBox="0 0 680 262" role="img" aria-labelledby="pipeTitle pipeDesc">
+              <title id="pipeTitle">Pipeline architecture</title>
+              <desc id="pipeDesc">Whole-slide image flows through segmentation, spicule-trail filtering, embedding, classification, and differential counting, then is compared to pathologists; a review interface feeds corrections back as training data.</desc>
+              <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+              <g class="node"><rect x="16" y="36" width="150" height="56" rx="6"/><text x="91" y="59" text-anchor="middle">Whole-slide image</text><text class="sub" x="91" y="77" text-anchor="middle">bone marrow aspirate</text></g>
+              <line class="edge" x1="166" y1="64" x2="178" y2="64" marker-end="url(#ah)"/>
+              <g class="node"><rect x="182" y="36" width="150" height="56" rx="6"/><text x="257" y="59" text-anchor="middle">Segment cells</text><text class="sub" x="257" y="77" text-anchor="middle">Cellpose via Slideflow</text></g>
+              <line class="edge" x1="332" y1="64" x2="344" y2="64" marker-end="url(#ah)"/>
+              <g class="node keep"><rect x="348" y="36" width="150" height="56" rx="6"/><text x="423" y="59" text-anchor="middle">Keep the spicule trail</text><text class="sub" x="423" y="77" text-anchor="middle">appearance filters (the fix)</text></g>
+              <line class="edge" x1="498" y1="64" x2="510" y2="64" marker-end="url(#ah)"/>
+              <g class="node"><rect x="514" y="36" width="150" height="56" rx="6"/><text x="589" y="59" text-anchor="middle">Embed each cell</text><text class="sub" x="589" y="77" text-anchor="middle">DinoBloom features</text></g>
+
+              <path class="edge" d="M589 92 L589 118 L91 118 L91 134" marker-end="url(#ah)"/>
+
+              <g class="node"><rect x="16" y="138" width="150" height="56" rx="6"/><text x="91" y="161" text-anchor="middle">Classify cell type</text><text class="sub" x="91" y="179" text-anchor="middle">head trained on public BMC</text></g>
+              <line class="edge" x1="166" y1="166" x2="178" y2="166" marker-end="url(#ah)"/>
+              <g class="node"><rect x="182" y="138" width="150" height="56" rx="6"/><text x="257" y="161" text-anchor="middle">Differential count</text><text class="sub" x="257" y="179" text-anchor="middle">per-type percentages</text></g>
+              <line class="edge" x1="332" y1="166" x2="344" y2="166" marker-end="url(#ah)"/>
+              <g class="node keep"><rect x="348" y="138" width="150" height="56" rx="6"/><text x="423" y="161" text-anchor="middle">Compare to pathologists</text><text class="sub" x="423" y="179" text-anchor="middle">correlation vs. expert counts</text></g>
+              <line class="edge" x1="498" y1="166" x2="510" y2="166" marker-end="url(#ah)"/>
+              <g class="node loop"><rect x="514" y="138" width="150" height="56" rx="6"/><text x="589" y="161" text-anchor="middle">Pathologist review UI</text><text class="sub" x="589" y="179" text-anchor="middle">corrections → new labels</text></g>
+
+              <path class="edge back" d="M589 194 L589 226 L91 226 L91 198" marker-end="url(#ah)"/>
+              <text class="lbl" x="340" y="246" text-anchor="middle">corrected labels feed back into the classifier</text>
+            </svg>
+          </div>
+          <figcaption>Teal boxes are the two pieces I'd point to first: the region filter that fixed the count, and the comparison against expert ground truth. Runs on the university's HPC cluster.</figcaption>
+        </figure>
+
+        <h4>Why a foundation model with a small head on top</h4>
+        <p>Labelled bone marrow cells are scarce and expensive: every label is a pathologist's time. So instead of training a classifier from pixels, each cell is passed through DinoBloom, a vision model pre-trained on millions of blood and marrow cells, which turns it into a vector where similar cells land near each other. A small classifier head trained on the public BMC dataset then only has to draw boundaries in a space that already makes sense.</p>
+
+        <figure class="figure">
+          <div class="panel corr" id="emb">
+            <div class="corr-head">
+              <div class="toggle" role="group" aria-label="Which representation of each cell">
+                <button type="button" data-mode="pixels" aria-pressed="true">Raw pixel features</button>
+                <button type="button" data-mode="embed" aria-pressed="false">DinoBloom embedding</button>
+              </div>
+              <div class="legend" aria-hidden="true"><span><i style="background:var(--cell-a)"></i>myeloid</span><span><i style="background:var(--cell-b)"></i>erythroid</span><span><i style="background:var(--cell-c)"></i>other</span></div>
+            </div>
+            <svg id="embsvg" viewBox="0 0 680 230" role="img" aria-labelledby="embTitle embDesc">
+              <title id="embTitle">Cells in feature space</title>
+              <desc id="embDesc">Points for three cell types. With raw pixel features they overlap in one cloud; with foundation-model embeddings they separate into three clusters.</desc>
+              <g id="embpts"></g>
+            </svg>
+            <div class="what" id="embWhat">In pixel space, cells of different types overlap: stain intensity, focus and orientation dominate. Any boundary you draw cuts through all three types.</div>
+          </div>
+          <figcaption>Illustrative two-dimensional sketch of a high-dimensional idea. Real embeddings have hundreds of dimensions, and the clusters are messier than this, which is where the classifier head earns its keep.</figcaption>
+        </figure>
+
+        <h4>The part I'm proudest of: the validation</h4>
+        <p>Most ML projects report accuracy on a benchmark and stop. Instead I compared the pipeline's differential counts against real pathologist differentials from the same slides. The first result was bad: the correlation was <em>negative</em>. Rather than tune hyperparameters, I treated it as a diagnosis problem and worked through the hypotheses in order.</p>
+
+        <ol class="hyp">
+          <li><div class="q">Segmentation or crop bugs<small>Checked crops by eye and by size distribution. Cells were intact.</small></div><span class="tag out">Ruled out</span></li>
+          <li><div class="q">Red blood cell contamination<small>RBCs were being filtered before classification.</small></div><span class="tag out">Ruled out</span></li>
+          <li><div class="q">Stain normalization<small>Normalizing stains changed little.</small></div><span class="tag out">Ruled out</span></li>
+          <li><div class="q">Confusing maturation stages<small>Some, but not enough to flip the sign.</small></div><span class="tag partial">Partial</span></li>
+          <li><div class="q">Counting the wrong region of the slide<small>The pipeline sampled the dense spicule core. Pathologists count the thin trail of cells spread behind it. Different cells, different proportions.</small></div><span class="tag cause">Root cause</span></li>
+        </ol>
+        <p>I designed image-appearance filters so the pipeline samples the trail the way a pathologist's eye does. That one change moved agreement from negative to strongly positive.</p>
+
+        <figure class="figure">
+          <div class="panel corr" id="corr">
+            <div class="corr-head">
+              <div class="toggle" role="group" aria-label="Which region the pipeline samples">
+                <button type="button" data-region="core" aria-pressed="true">Sample the spicule core</button>
+                <button type="button" data-region="trail" aria-pressed="false">Sample the trail</button>
+              </div>
+              <div class="legend" aria-hidden="true"><span><i style="background:var(--cell-a)"></i>myeloid</span><span><i style="background:var(--cell-b)"></i>erythroid</span><span><i style="background:var(--cell-c)"></i>other</span></div>
+            </div>
+            <svg id="spicule" viewBox="0 0 680 230" role="img" aria-labelledby="spTitle spDesc">
+              <title id="spTitle">Synthetic bone marrow spicule</title>
+              <desc id="spDesc">A dense core of clumped cells on the left and a thin trail of spread cells to the right. A dashed box shows which region is being sampled.</desc>
+              <text class="sp-lbl" x="150" y="22" text-anchor="middle">spicule core: dense, clumped</text>
+              <text class="sp-lbl" x="455" y="22" text-anchor="middle">trail: cells spread thin, this is what pathologists count</text>
+              <g id="cells"></g>
+              <rect id="window" x="52" y="38" width="196" height="160" rx="6" fill="none" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="6 5"/>
+            </svg>
+            <div class="counts" id="counts"></div>
+            <div class="readout">
+              <div class="num" id="corrNum" aria-live="polite">r = −0.16</div>
+              <div class="what" id="corrWhat">The core is crowded and poorly spread, so a different mix of cells is visible there. Counting it gives a differential that moves against the pathologists’.</div>
+            </div>
+          </div>
+          <figcaption>Illustrative: the spicule and its cells are synthetic, drawn to show the mechanism. The correlation values are the real aggregate results, before and after the fix. No patient data appears on this page.</figcaption>
+        </figure>
+
+        <h4>What's next, and why it's within reach</h4>
+        <p>One failure mode is left: the classifier was trained on a public dataset, and some of the lab's plasma cells come out looking like basophils to it. That is a textbook domain shift, and the pipeline was built to close it. The review interface shows a pathologist each prediction, takes a one-click correction, and stores it as an in-house label. A few hundred of those is enough to fine-tune the head on the lab's own slides.</p>
+        <p>My summer research scholarship ended before that review round could happen, so I handed off the pipeline with the failure documented, the evidence attached, and the UI ready. Once the lab has a pathologist's time to spend on the review, the fix is a fine-tuning run away, and the same loop keeps improving the model after that.</p>
+
+        <figure class="figure">
+          <div class="panel corr" id="review">
+            <div class="review-grid">
+              <div class="cell-card">
+                <svg id="cellsvg" viewBox="0 0 120 120" aria-hidden="true"></svg>
+                <div class="pred"><span class="muted">model says</span><strong id="predLbl">erythroid</strong><span class="muted" id="predConf">0.71 confidence</span></div>
+              </div>
+              <div class="review-actions">
+                <p class="muted" style="margin:0 0 8px">What a pathologist sees. Agree, or correct it.</p>
+                <button type="button" class="rbtn agree" id="agree">Agree</button>
+                <div class="correct">
+                  <label for="corrSel" class="muted">Correct to</label>
+                  <select id="corrSel"></select>
+                  <button type="button" class="rbtn" id="submitCorr">Save label</button>
+                </div>
+                <div class="tally" aria-live="polite"><span><strong id="nReviewed">0</strong> reviewed</span><span><strong id="nCorrected">0</strong> corrections</span><span><strong id="nLabels">0</strong> new in-house labels</span></div>
+                <p class="muted" id="reviewNote" style="margin:10px 0 0">Every review becomes a label the model can be fine-tuned on, so the pathologist's time goes exactly where the model is weakest.</p>
+              </div>
+            </div>
+          </div>
+          <figcaption>A rebuilt sketch of the review loop with synthetic cells. The lab's real interface works the same way on actual cell crops, with the corrections written back as training data.</figcaption>
+        </figure>
+      </div>
+    </article>
+
+    <!-- ============ Case 2: Informed Renters ============ -->
+    <article class="case" id="renters">
+      <aside class="facts" aria-label="Project facts">
+        <div class="context">Independent project, live. September 2026.</div>
+        <dl>
+          <div><dt>Result</dt><dd class="result">Any Hyde Park address to a violation report in <span>one search</span></dd></div>
+          <div><dt>My role</dt><dd>Solo: problem, design, code, tests, deploy</dd></div>
+          <div class="wide"><dt>Stack</dt><dd><div class="pill-list"><span class="pill">TypeScript</span><span class="pill">Cloudflare Workers</span><span class="pill">Chicago Data Portal (SODA)</span><span class="pill">Vanilla HTML/CSS/JS</span><span class="pill">vitest</span></div></dd></div>
+          <div><dt>Status</dt><dd>Live and open source. Built in three days.</dd></div>
+        </dl>
+        <div class="links">
+          <a href="https://hyde-park-violation-checker.grace-g-stephens.workers.dev">Open the live tool</a>
+          <a href="https://github.com/GraceStephens/Hyde-Park-Violation-Checker">Read the code on GitHub</a>
+        </div>
+      </aside>
+
+      <div class="narrative">
+        <h3 class="title">Hyde Park Violation Checker: what the landlord said vs. what the city recorded</h3>
+        <p class="summary">Paste a building address and see the City of Chicago's violation history before you sign the lease.</p>
+
+        <h4>Why I built it</h4>
+        <p>I signed a lease on a sixth-floor apartment after the landlord told me the elevator would be repaired by move-in. It wasn't. What stung was learning afterward that the city publishes every building inspection and violation, and that a one-minute search would have shown me the open elevator violations before I toured. Most people I know in Hyde Park have a version of this story. It costs students time and money at exactly the moment they can least afford either.</p>
+        <p>So I built the tool I wish I'd had, for myself and for other UChicago students.</p>
+
+        <h4>The design problem</h4>
+        <p>The window where this information is useful is tiny: between getting an address from a Facebook post or a DM and deciding whether to tour. Nobody opens a city data portal in that window. The tool had to be instant, forgiving of messy addresses, and honest about what the records do and don't mean.</p>
+
+        <figure class="figure">
+          <ol class="flow" aria-label="How a search works">
+            <li class="src"><strong>Messy address</strong><span>"5432 s kimbark", copied from a listing</span></li>
+            <li><strong>Normalize</strong><span>deterministic rules, not ML</span></li>
+            <li><strong>Query the city</strong><span>Socrata SODA API, cached at the edge</span></li>
+            <li><strong>Rate severity</strong><span>explainable rules per violation</span></li>
+            <li class="out"><strong>Report</strong><span>shareable link, plain language</span></li>
+          </ol>
+          <figcaption>Every step is deterministic on purpose. For a decision this consequential, a renter should be able to see exactly why a building was flagged.</figcaption>
+        </figure>
+
+        <h4>The judgment calls</h4>
+        <ul>
+          <li><strong>Address normalization.</strong> "5432 S Kimbark", "5432 South Kimbark Ave" and "5432 s. kimbark ave." all need to hit the same record. I wrote rules for the variants people actually paste, and tested them against real portal data.</li>
+          <li><strong>Severity without a black box.</strong> A rules-based rating (elevator, heat, and structural issues outrank cosmetic ones) that users can read and argue with, instead of a model they can't.</li>
+          <li><strong>Explaining the data's quirks.</strong> "No entry" inspections, where the inspector couldn't get in, show up constantly and look alarming. The tool explains what they mean rather than counting them as violations.</li>
+          <li><strong>Boring technology.</strong> Workers, static assets, edge caching, no framework. The constraint was speed and clarity for a stressed person, not an impressive stack.</li>
+        </ul>
+
+        <figure class="figure">
+          <div class="report" aria-label="Illustrative sample report">
+            <header><strong>1234 E 55th St</strong><small>sample report, not real records</small></header>
+            <div class="row"><span class="sev high">High</span><div>Elevator out of service, open since March<span>Open 7 months · no re-inspection on file</span></div></div>
+            <div class="row"><span class="sev med">Medium</span><div>Porch railing below code height<span>Cited twice · marked complied in August</span></div></div>
+            <div class="row"><span class="sev info">Note</span><div>3 "no entry" inspections<span>Inspector couldn't get in. Not a violation, but worth asking about.</span></div></div>
+          </div>
+          <figcaption>What a renter sees. The real tool runs on live city data for any Chicago address.</figcaption>
+        </figure>
+
+        <h4>What's next</h4>
+        <p>The data already covers the whole city; only the design is Hyde Park-specific. The next step is the other university neighborhoods in Chicago, then the city as a whole, keeping the same constraint: fast, clear, and useful to someone who has ten minutes and a lot riding on the answer.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="block" id="about">
+  <div class="wrap">
+    <h2 class="section-title">About</h2>
+    <div class="about">
+      <div>
+        <p>I came to computer science through cognitive science: I wanted to understand how people think, and ended up wanting to understand how the systems we build think too. That's why interpretability and AI safety pull at me. They're the places where "does this actually work, and how would we know?" is the whole job.</p>
+        <p>I'd rather ship something simple that people use than something impressive that nobody does, and I'm happiest on projects where I'm learning something I didn't know how to do when I started.</p>
+      </div>
+      <div>
+        <p>Lately, that curiosity has mostly taken the form of travel. I've done study programs on three continents, in Chicago, Córdoba, and Hangzhou, and in the last year I've visited twelve countries across five of them. From every one I've brought back recipes and books, and that collection has become a running education: I cook my way through it, read my way through it, and it keeps changing how I think about food, history, and the people I met along the way. I'm learning Spanish and Chinese so I can keep going back.</p>
+        <p>If you're working on something where rigor matters and you'd like to talk, I'd love to hear from you.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer id="contact">
+  <div class="wrap">
+    <div>
+      <a href="mailto:gracestephens@uchicago.edu">Email</a>
+      <a href="https://github.com/GraceStephens">GitHub</a>
+      <a href="https://www.linkedin.com/in/REPLACE-WITH-YOUR-HANDLE">LinkedIn</a>
+      <a href="resume.pdf">Résumé</a>
+    </div>
+    <small>Grace Stephens · Chicago · 2026</small>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var rnd = (function (seed) { return function () { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }; })(7);
+  var TYPES = ['a', 'b', 'c'], COLORS = { a: 'var(--cell-a)', b: 'var(--cell-b)', c: 'var(--cell-c)' };
+  var LABELS = { a: 'myeloid', b: 'erythroid', c: 'other' };
+  var REF = { a: 55, b: 25, c: 20 };
+  function pick(w) { var r = rnd(), acc = 0; for (var i = 0; i < 3; i++) { acc += w[i]; if (r < acc) return TYPES[i]; } return 'c'; }
+  var cells = [];
+  for (var i = 0; i < 110; i++) {
+    var ang = rnd() * Math.PI * 2, rad = Math.sqrt(rnd());
+    cells.push({ x: 150 + Math.cos(ang) * rad * 92, y: 118 + Math.sin(ang) * rad * 68, r: 8 + rnd() * 3, t: pick([0.28, 0.57, 0.15]), region: 'core' });
+  }
+  for (var j = 0; j < 52; j++) {
+    var u = rnd(), x = 262 + u * 390, spread = 68 - u * 40;
+    cells.push({ x: x, y: 118 + (rnd() - 0.5) * 2 * spread, r: 7 + rnd() * 2.5, t: pick([0.54, 0.26, 0.20]), region: 'trail' });
+  }
+  var g = document.getElementById('cells'), svgNS = 'http://www.w3.org/2000/svg';
+  cells.forEach(function (c) {
+    var el = document.createElementNS(svgNS, 'circle');
+    el.setAttribute('cx', c.x.toFixed(1)); el.setAttribute('cy', c.y.toFixed(1)); el.setAttribute('r', c.r.toFixed(1));
+    el.setAttribute('fill', COLORS[c.t]); el.dataset.region = c.region; g.appendChild(el); c.el = el;
+  });
+  var win = document.getElementById('window'), num = document.getElementById('corrNum'), what = document.getElementById('corrWhat');
+  var counts = document.getElementById('counts'), buttons = document.querySelectorAll('#corr .toggle button');
+  var COPY = {
+    core: 'The core is crowded and poorly spread, so a different mix of cells is visible there. Counting it gives a differential that moves against the pathologists\u2019.',
+    trail: 'Sampling the trail, where cells are spread one layer thick, the pipeline sees what the pathologist sees and its counts move with theirs.'
+  };
+  var R = { core: -0.16, trail: 0.40 };
+  function render(region) {
+    win.setAttribute('x', region === 'core' ? 52 : 254); win.setAttribute('width', region === 'core' ? 196 : 410);
+    var tally = { a: 0, b: 0, c: 0 }, n = 0;
+    cells.forEach(function (c) { var inside = c.region === region; c.el.classList.toggle('dim', !inside); if (inside) { tally[c.t]++; n++; } });
+    var html = '';
+    TYPES.forEach(function (t) {
+      var pct = Math.round(tally[t] / n * 100);
+      html += '<div class="lab">' + LABELS[t] + '</div><div class="track"><div class="ref" style="left:' + REF[t] + '%"></div><div class="fill" style="width:' + pct + '%;background:' + COLORS[t] + '"></div></div><div class="val">' + pct + '%</div>';
+    });
+    html += '<div class="key">bar: pipeline count in the boxed region <b></b> pathologist reference (illustrative proportions)</div>';
+    counts.innerHTML = html;
+    var r = R[region]; num.classList.toggle('pos', r >= 0);
+    num.textContent = 'r = ' + (r < 0 ? '\u2212' : '+') + Math.abs(r).toFixed(2);
+    what.textContent = COPY[region];
+    buttons.forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.region === region ? 'true' : 'false'); });
+  }
+  buttons.forEach(function (b) { b.addEventListener('click', function () { render(b.dataset.region); }); });
+  render('core');
+})();
+
+(function () {
+  var rnd = (function (seed) { return function () { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }; })(23);
+  function gauss() { var u = 1 - rnd(), v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+  var COLORS = ['var(--cell-a)', 'var(--cell-b)', 'var(--cell-c)'];
+  var centers = [[170, 118], [340, 118], [510, 118]];
+  var pts = [], g = document.getElementById('embpts'), NS = 'http://www.w3.org/2000/svg';
+  for (var t = 0; t < 3; t++) for (var i = 0; i < 32; i++) {
+    var p = { t: t, px: 340 + gauss() * 110, py: 118 + gauss() * 42, ex: centers[t][0] + gauss() * 34, ey: centers[t][1] + gauss() * 30 };
+    p.px = Math.min(660, Math.max(20, p.px)); p.py = Math.min(212, Math.max(18, p.py));
+    var el = document.createElementNS(NS, 'circle'); el.setAttribute('r', 5.5); el.setAttribute('fill', COLORS[t]); g.appendChild(el); p.el = el; pts.push(p);
+  }
+  var what = document.getElementById('embWhat'), btns = document.querySelectorAll('#emb .toggle button');
+  var COPY = { pixels: 'In pixel space, cells of different types overlap: stain intensity, focus and orientation dominate. Any boundary you draw cuts through all three types.',
+               embed: 'In the foundation model\u2019s space, the same cells fall into clusters by type. The classifier head only has to separate clusters, which takes far fewer labels.' };
+  function render(mode) {
+    pts.forEach(function (p) { p.el.setAttribute('cx', (mode === 'embed' ? p.ex : p.px).toFixed(1)); p.el.setAttribute('cy', (mode === 'embed' ? p.ey : p.py).toFixed(1)); });
+    what.textContent = COPY[mode];
+    btns.forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.mode === mode ? 'true' : 'false'); });
+  }
+  btns.forEach(function (b) { b.addEventListener('click', function () { render(b.dataset.mode); }); });
+  render('pixels');
+})();
+
+(function () {
+  var rnd = (function (seed) { return function () { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }; })(99);
+  var TYPES = ['myeloid', 'erythroid', 'lymphoid', 'plasma cell', 'basophil', 'other'];
+  var sel = document.getElementById('corrSel');
+  TYPES.forEach(function (t) { var o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o); });
+  var svg = document.getElementById('cellsvg'), predLbl = document.getElementById('predLbl'), predConf = document.getElementById('predConf');
+  var nR = 0, nC = 0, cur;
+  var queue = [
+    { truth: 'erythroid', pred: 'erythroid', conf: 0.71 },
+    { truth: 'plasma cell', pred: 'basophil', conf: 0.58 },
+    { truth: 'myeloid', pred: 'myeloid', conf: 0.88 },
+    { truth: 'plasma cell', pred: 'basophil', conf: 0.62 },
+    { truth: 'lymphoid', pred: 'lymphoid', conf: 0.79 }
+  ];
+  var q = 0;
+  function drawCell(c) {
+    var cyto = { 'erythroid': '#F2B8C6', 'myeloid': '#F6D1D1', 'lymphoid': '#E8DDF5', 'plasma cell': '#CFE3F5', 'basophil': '#E3D3F0', 'other': '#F3E3C8' }[c.truth];
+    var nuc = { 'erythroid': '#4B2F72', 'myeloid': '#6E4A8E', 'lymphoid': '#3E2A5E', 'plasma cell': '#4A3270', 'basophil': '#2E1F4A', 'other': '#5A3F7A' }[c.truth];
+    var r = 40 + rnd() * 10, nr = c.truth === 'plasma cell' ? 22 : c.truth === 'lymphoid' ? 30 : 18 + rnd() * 10;
+    var nx = c.truth === 'plasma cell' ? 44 : 60 + (rnd() - 0.5) * 16, ny = 60 + (rnd() - 0.5) * 16;
+    var granules = '';
+    if (c.truth === 'basophil' || c.truth === 'myeloid') for (var i = 0; i < 18; i++) { var a = rnd() * 6.28, d = rnd() * (r - 8); granules += '<circle cx="' + (60 + Math.cos(a) * d).toFixed(1) + '" cy="' + (60 + Math.sin(a) * d).toFixed(1) + '" r="2" fill="' + nuc + '" opacity=".5"/>'; }
+    svg.innerHTML = '<rect width="120" height="120" fill="#FBF3EE"/><circle cx="60" cy="60" r="' + r + '" fill="' + cyto + '" stroke="#C9A4B2" stroke-width="1"/>' + granules + '<circle cx="' + nx + '" cy="' + ny + '" r="' + nr + '" fill="' + nuc + '"/>';
+    predLbl.textContent = c.pred; predConf.textContent = c.conf.toFixed(2) + ' confidence'; sel.value = c.truth;
+  }
+  function next() { cur = queue[q % queue.length]; q++; drawCell(cur); }
+  function bump() {
+    document.getElementById('nReviewed').textContent = nR; document.getElementById('nCorrected').textContent = nC; document.getElementById('nLabels').textContent = nR;
+    var note = document.getElementById('reviewNote');
+    if (nC >= 2) note.textContent = 'Notice the pattern: plasma cells keep coming back as basophils. Two corrections already point at the exact fine-tuning the model needs.';
+  }
+  document.getElementById('agree').addEventListener('click', function () { nR++; bump(); next(); });
+  document.getElementById('submitCorr').addEventListener('click', function () { nR++; if (sel.value !== cur.pred) nC++; bump(); next(); });
+  next();
+})();
+</script>
+</body>
+</html>
